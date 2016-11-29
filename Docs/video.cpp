@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
 
 
 
-	
+
 	while (1) {
 
 
@@ -215,7 +215,8 @@ int main(int argc, char* argv[])
 		cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
 		//filter HSV image between values and store filtered image to
 		//threshold matrix
-		inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold);
+		inRange(HSV, Scalar(17, 95, 0), Scalar(87, 256, 256), threshold);
+		//inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold);
 		//perform morphological operations on thresholded image to eliminate noise
 		//and emphasize the filtered object(s)
 		if (useMorphOps)
@@ -238,4 +239,3 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
