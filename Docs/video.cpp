@@ -191,7 +191,8 @@ int main(int argc, char* argv[])
 	//matrix storage for binary threshold image
 	Mat threshold;
 	//x and y values for the location of the object
-	int x = 0, y = 0;
+	int xv = 0, yv = 0;
+	int xr = 0, yr = 0;
 	//create slider bars for HSV filtering
 	createTrackbars();
 	//video capture object to acquire webcam feed
@@ -209,13 +210,22 @@ int main(int argc, char* argv[])
 	while (1) {
 
 
+
+
+
 		//store image to matrix
 		capture.read(cameraFeed);
 		//convert frame from BGR to HSV colorspace
+
+		/****
+		detect red obj
+		*****/
+
 		cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
 		//filter HSV image between values and store filtered image to
 		//threshold matrix
-		inRange(HSV, Scalar(17, 95, 0), Scalar(87, 256, 256), threshold);
+
+		inRange(HSV, Scalar(153, 0, 147), Scalar(218, 255, 255), threshold); /*filter red*/
 		//inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold);
 		//perform morphological operations on thresholded image to eliminate noise
 		//and emphasize the filtered object(s)
@@ -224,13 +234,38 @@ int main(int argc, char* argv[])
 		//pass in thresholded frame to our object tracking function
 		//this function will return the x and y coordinates of the
 		//filtered object
-		if (trackObjects)
-			trackFilteredObject(x, y, threshold, cameraFeed);
+		if (trackObjects){
+			trackFilteredObject(xr, yr, threshold, cameraFeed);
 
+		}
+		cout<<"x red: "<<xr<<" "<<"y red"<<yr<<"\n";
+
+		/****
+		detect green obj
+		*****/
+
+		cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
+		//filter HSV image between values and store filtered image to
+		//threshold matrix
+		inRange(HSV, Scalar(47, 95, 0), Scalar(87, 256, 256), threshold); /*filter green*/
+		//inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold);
+		//perform morphological operations on thresholded image to eliminate noise
+		//and emphasize the filtered object(s)
+		if (useMorphOps)
+			morphOps(threshold);
+		//pass in thresholded frame to our object tracking function
+		//this function will return the x and y coordinates of the
+		//filtered object
+		if (trackObjects){
+			trackFilteredObject(xv, yv, threshold, cameraFeed);
+			//trackFilteredObject(xr, yr, threshold, cameraFeed);
+
+		}
+		cout<<"x verde: "<<xv<<" "<<"y verde"<<yv<<"\n";
 		//show frames
 		imshow(windowName2, threshold);
 		imshow(windowName, cameraFeed);
-		imshow(windowName1, HSV);
+		//imshow(windowName1, HSV);
 		setMouseCallback("Original Image", on_mouse, &p);
 		//delay 30ms so that screen can refresh.
 		//image will not appear without this waitKey() command
