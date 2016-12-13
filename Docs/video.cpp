@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h> 
+#include <netdb.h>
 
 
 using namespace std;
@@ -196,29 +196,29 @@ int main(int argc, char* argv[])
 {
 	//structures for sockets
 	int sockfd, portno, n;
-    	struct sockaddr_in serv_addr;
-	struct hostent *server;	
+  struct sockaddr_in serv_addr;
+	struct hostent *server;
 	unsigned char buffer;
 	size_t size =1;
-	
+
 	portno = 20231;
-   	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0) 
+  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0)
         	error("ERROR opening socket");
 	 server = gethostbyname("193.226.12.217");
 
-	 bzero((char *) &serv_addr, sizeof(serv_addr));
-    		serv_addr.sin_family = AF_INET;
+	 //bzero((char *) &serv_addr, sizeof(serv_addr));
+  	serv_addr.sin_family = AF_INET;
 		bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
     	serv_addr.sin_port = htons(portno);
-	if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
+	if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
         	error("ERROR connecting");
 	printf("Please enter the message: ");
 	buffer = '\0';
 	fscanf(stdin,"%c",&buffer);
 	cout<< buffer;
-	n = write(sockfd,buffer,(size_t)sizeof(buffer));
-	if (n < 0) 
+	n = write(sockfd,&buffer,1);
+	if (n < 0)
         	error("ERROR writing to socket");
 	//some boolean variables for different functionality within this
 	//program
