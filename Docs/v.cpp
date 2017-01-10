@@ -14,6 +14,7 @@
 #include <netdb.h>
 
 
+
 using namespace std;
 using namespace cv;
 //initial min and max HSV filter values.
@@ -308,7 +309,8 @@ int main(int argc, char *argv[]) {
     }
 
     return 0;
-=======
+}
+
 void sendCommand(){
   int sockfd, portno, n;
   struct sockaddr_in serv_addr;
@@ -488,5 +490,4 @@ int main(int argc, char* argv[])
 	}
 
 	return 0;
->>>>>>> filters
 }

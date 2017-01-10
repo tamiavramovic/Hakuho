@@ -14,6 +14,10 @@
 #include <netdb.h>
 
 
+// yellow for orientation
+// base color: red
+// opponent color: blue
+
 using namespace std;
 using namespace cv;
 //initial min and max HSV filter values.
@@ -32,6 +36,8 @@ struct hostent *server;
 void configureSocket();
 
 void sendCommand();
+
+void sendCommand(unsigned char c);
 
 unsigned char buffer;
 
@@ -213,11 +219,16 @@ int main(int argc, char *argv[]) {
     //matrix storage for HSV image
     Mat HSV;
     //matrix storage for binary threshold image
+    //matrix storage for binary threshold image
     Mat threshold_green;
     Mat threshold_red;
+    Mat threshold_blue;
+    Mat threshold_yellow;
     //x and y values for the location of the object
     int xv = 0, yv = 0;
     int xr = 0, yr = 0;
+    int xa = 0, ya = 0;
+    int xg = 0, yg = 0;
     //create slider bars for HSV filtering
     createTrackbars();
     //video capture object to acquire webcam feed
@@ -236,52 +247,116 @@ int main(int argc, char *argv[]) {
         capture.read(cameraFeed);
         //convert frame from BGR to HSV colorspace
 
-        /****
-        detect red obj
-        *****/
 
-        cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
-        //filter HSV image between values and store filtered image to
-        //threshold matrix
+        do {
+            /****
+            detect red obj
+            *****/
 
-        inRange(HSV, Scalar(0, 185, 197), Scalar(58, 256, 256), threshold_red); /*filter red*/
+            cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
+            //filter HSV image between values and store filtered image to
+            //threshold matrix
+
+            inRange(HSV, Scalar(0, 185, 197), Scalar(58, 256, 256), threshold_red); /*filter red*/
 //        inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold_red);
-        //perform morphological operations on thresholded image to eliminate noise
-        //and emphasize the filtered object(s)
-        if (useMorphOps)
-            morphOps(threshold_red);
-        //pass in thresholded frame to our object tracking function
-        //this function will return the x and y coordinates of the
-        //filtered object
-        if (trackObjects) {
-            trackFilteredObject(xr, yr, threshold_red, cameraFeed);
+            //perform morphological operations on thresholded image to eliminate noise
+            //and emphasize the filtered object(s)
+            if (useMorphOps)
+                morphOps(threshold_red);
+            //pass in thresholded frame to our object tracking function
+            //this function will return the x and y coordinates of the
+            //filtered object
+            if (trackObjects) {
+                trackFilteredObject(xr, yr, threshold_red, cameraFeed);
 
-        }
-        cout << "x red: " << xr << " " << "y red" << yr << "\n";
+            }
+            cout << "x red: " << xr << " " << "y red" << yr << "\n";
 
-        /****
-        detect green obj
-        *****/
+            /****
+            detect green obj
+            *****/
 
-        cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
-        //filter HSV image between values and store filtered image to
-        //threshold matrix
-        inRange(HSV, Scalar(47, 95, 0), Scalar(87, 256, 256), threshold_green); /*filter green*/
-        //inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold);
-        //perform morphological operations on thresholded image to eliminate noise
-        //and emphasize the filtered object(s)
-        if (useMorphOps)
-            morphOps(threshold_green);
-        //pass in thresholded frame to our object tracking function
-        //this function will return the x and y coordinates of the
-        //filtered object
-        if (trackObjects) {
-            trackFilteredObject(xv, yv, threshold_green, cameraFeed);
-            //trackFilteredObject(xr, yr, threshold, cameraFeed);
+            cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
+            //filter HSV image between values and store filtered image to
+            //threshold matrix
+            inRange(HSV, Scalar(47, 95, 0), Scalar(87, 256, 256), threshold_green); /*filter green*/
+            //inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold);
+            //perform morphological operations on thresholded image to eliminate noise
+            //and emphasize the filtered object(s)
+            if (useMorphOps)
+                morphOps(threshold_green);
+            //pass in thresholded frame to our object tracking function
+            //this function will return the x and y coordinates of the
+            //filtered object
+            if (trackObjects) {
+                trackFilteredObject(xv, yv, threshold_green, cameraFeed);
+                //trackFilteredObject(xr, yr, threshold, cameraFeed);
 
-        }
-        cout << "x verde: " << xv << " " << "y verde" << yv << "\n";
+            }
+            cout << "x verde: " << xv << " " << "y verde" << yv << "\n";
 
+
+            /****
+               detect blue obj
+            *****/
+
+            cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
+            //filter HSV image between values and store filtered image to
+            //threshold matrix
+
+            inRange(HSV, Scalar(102, 24, 54), Scalar(103, 255, 256), threshold_blue); /*filter blue*/
+            //inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold_blue);
+            //perform morphological operations on thresholded image to eliminate noise
+            //and emphasize the filtered object(s)
+            if (useMorphOps)
+                morphOps(threshold_blue);
+            //pass in thresholded frame to our object tracking function
+            //this function will return the x and y coordinates of the
+            //filtered object
+            if (trackObjects) {
+                trackFilteredObject(xa, ya, threshold_blue, cameraFeed);
+
+            }
+            cout << "x blue: " << xa << " " << "y blue" << ya << "\n";
+
+            /****
+                detect yellow obj
+                *****/
+
+            cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
+            //filter HSV image between values and store filtered image to
+            //threshold matrix
+
+            inRange(HSV, Scalar(0, 81, 221), Scalar(82, 205, 256), threshold_yellow); /*filter yellow*/
+            //		inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold_yellow);
+            //perform morphological operations on thresholded image to eliminate noise
+            //and emphasize the filtered object(s)
+            if (useMorphOps)
+                morphOps(threshold_yellow);
+            //pass in thresholded frame to our object tracking function
+            //this function will return the x and y coordinates of the
+            //filtered object
+            if (trackObjects) {
+                trackFilteredObject(xg, yg, threshold_yellow, cameraFeed);
+
+            }
+            cout << "x yellow: " << xg << " " << "y yellow" << yg << "\n";
+
+
+            if (yg < yr) {
+                sendCommand('r');
+                usleep(100);
+                sendCommand('s');
+            } else {
+                sendCommand('l');
+                usleep(100);
+                sendCommand('s');
+            }
+
+        } while (((xg - xr) * (ya - yr) != (xa - xr) * (yg - yr)) && (xr >= xg || xg >= xa));
+
+
+        sendCommand('s');
 
 
         //show frames
@@ -307,6 +382,13 @@ void sendCommand() {
         error("ERROR writing to socket");
 }
 
+void sendCommand(unsigned char c) {
+    //cout << "Sent:" << c;
+    n = write(sockfd, &c, 1);
+    if (n < 0)
+        error("ERROR writing to socket");
+}
+
 void configureSocket() {
     portno = 20231;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -320,3 +402,6 @@ void configureSocket() {
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR connecting");
 }
+
+
+void getCoordinates(int x, int y) {}
