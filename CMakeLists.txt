@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project( Video )
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 add_executable( Video video.cpp )
-target_link_libraries( Video ${OpenCV_LIBS} )
+target_link_libraries( Video ${OpenCV_LIBS} -lpthread )

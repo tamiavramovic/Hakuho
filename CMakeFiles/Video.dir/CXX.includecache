@@ -11,6 +11,8 @@ sstream
 -
 string
 -
+thread
+-
 iostream
 -
 opencv2/highgui/highgui.hpp

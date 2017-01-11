@@ -13,35 +13,23 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-
-// yellow for orientation
-// base color: red
-// opponent color: blue
+using namespace std;
+using namespace cv;
 
 /***
-Global vars
-// ***/
-// Point p;
-// Mat cameraFeed; //Matrix to store each frame of the webcam feed
-// Mat HSV; //matrix storage for HSV image
-// Mat threshold_green;
-// Mat threshold_red;
-// Mat threshold_blue;
-// Mat threshold_yellow;
+    Global vars
+***/
 
 //x and y values for the location of the object
 int xb = 0, yb = 0;
 int xd = 0, yd = 0;
 int xo = 0, yo = 0;
-//int xg = 0, yg = 0;
 
 //some boolean variables for different functionality within this
 //program
 bool trackObjects = true;
 bool useMorphOps = true;
 
-using namespace std;
-using namespace cv;
 //initial min and max HSV filter values.
 //these will be changed using trackbars
 int H_MIN = 0;
@@ -233,6 +221,11 @@ void sendCommand() {
 }
 
 void sendCommand(unsigned char c) {
+    thread t1(thread_task, c);
+    t1.join();
+}
+
+void thread_task(unsigned char c) {
     //cout << "Sent:" << c;
     n = write(sockfd, &c, 1);
     if (n < 0)
@@ -265,46 +258,44 @@ void setCoordinates_RED(int &x, int &y, Mat cameraFeed, Mat HSV, Mat threshold_r
     //cout << "x red: " << xr << " " << "y red" << yr << "\n";
 }
 
-void setCoordinates_BLUE(int &x, int &y, Mat cameraFeed, Mat HSV, Mat threshold_blue){
-  cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
-  inRange(HSV, Scalar(102, 24, 54), Scalar(103, 255, 256), threshold_blue);
-  if (useMorphOps)
-      morphOps(threshold_blue);
-  if (trackObjects) {
-      trackFilteredObject(x, y, threshold_blue, cameraFeed);
-  }
-  //cout << "x blue: " << xa << " " << "y blue" << ya << "\n";
+void setCoordinates_BLUE(int &x, int &y, Mat cameraFeed, Mat HSV, Mat threshold_blue) {
+    cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
+    inRange(HSV, Scalar(102, 24, 54), Scalar(103, 255, 256), threshold_blue);
+    if (useMorphOps)
+        morphOps(threshold_blue);
+    if (trackObjects) {
+        trackFilteredObject(x, y, threshold_blue, cameraFeed);
+    }
+    //cout << "x blue: " << xa << " " << "y blue" << ya << "\n";
 }
 
-void setCoordinates_YELLOW(int &x, int &y,Mat cameraFeed, Mat HSV, Mat threshold_yellow){
-  cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
-  inRange(HSV, Scalar(0, 81, 221), Scalar(82, 205, 256), threshold_yellow);
-  if (useMorphOps)
-      morphOps(threshold_yellow);
-  if (trackObjects) {
-      trackFilteredObject(x, y, threshold_yellow, cameraFeed);
-  }
-  //cout << "x yellow: " << xg << " " << "y yellow" << yg << "\n";
+void setCoordinates_YELLOW(int &x, int &y, Mat cameraFeed, Mat HSV, Mat threshold_yellow) {
+    cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
+    inRange(HSV, Scalar(0, 81, 221), Scalar(82, 205, 256), threshold_yellow);
+    if (useMorphOps)
+        morphOps(threshold_yellow);
+    if (trackObjects) {
+        trackFilteredObject(x, y, threshold_yellow, cameraFeed);
+    }
+    //cout << "x yellow: " << xg << " " << "y yellow" << yg << "\n";
 }
 
-void setCoordinates_GREEN(int &x, int &y,Mat cameraFeed, Mat HSV, Mat threshold_green){
-  cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
-  inRange(HSV, Scalar(47, 95, 0), Scalar(87, 256, 256), threshold_green);
-  if (useMorphOps)
-      morphOps(threshold_green);
-  if (trackObjects) {
-      trackFilteredObject(x, y, threshold_green, cameraFeed);
-  }
-  //cout << "x verde: " << xv << " " << "y verde" << yv << "\n";
+void setCoordinates_GREEN(int &x, int &y, Mat cameraFeed, Mat HSV, Mat threshold_green) {
+    cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
+    inRange(HSV, Scalar(47, 95, 0), Scalar(87, 256, 256), threshold_green);
+    if (useMorphOps)
+        morphOps(threshold_green);
+    if (trackObjects) {
+        trackFilteredObject(x, y, threshold_green, cameraFeed);
+    }
+    //cout << "x verde: " << xv << " " << "y verde" << yv << "\n";
 }
-
-
 
 
 int main(int argc, char *argv[]) {
     //structures for sockets
     configureSocket();
-   
+
     Point p;
     Mat cameraFeed; //Matrix to store each frame of the webcam feed
     Mat HSV; //matrix storage for HSV image
@@ -323,51 +314,42 @@ int main(int argc, char *argv[]) {
     capture.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
     //start an infinite loop where webcam feed is copied to cameraFeed matrix
     //all of our operations will be performed within this loop
-    while(1){
-      //store image to matrix
-      capture.read(cameraFeed);
-      //convert frame from BGR to HSV colorspace
+    while (1) {
+        //store image to matrix
+        capture.read(cameraFeed);
 
-      //setCoordinates_RED(cameraFeed,HSV,threshold_red);
-      //setCoordinates_GREEN(cameraFeed,HSV,threshold_green);
-      //setCoordinates_BLUE(cameraFeed,HSV,threshold_blue);
-      //setCoordinates_YELLOW(cameraFeed,HSV,threshold_yellow);
-      
-      
-      do{
-        setCoordinates_RED(xb,yb,cameraFeed,HSV,threshold_red);
-        setCoordinates_BLUE(xo,yo,cameraFeed,HSV,threshold_blue);
-        setCoordinates_YELLOW(xd,yd,cameraFeed,HSV,threshold_yellow);
-        //setCoordinates_GREEN(cameraFeed,HSV,threshold_green);
-       if (yd < yb) {
-           sendCommand('r');
-           usleep(250000);
-           sendCommand('s');
-           usleep(250000);
-       } else {
-           sendCommand('l');
-           usleep(250000);
-           sendCommand('s');
-           usleep(250000);
-       }
-      }while((xg<xr)||(xg>xa));
-      break;
-      
-     
-  /*
-      sendCommand('r');
-      usleep(500000);
-      sendCommand('s');
-      usleep(500000);
-*/
-      //show frames
-      //imshow(windowName2, threshold_red);
-      //imshow(windowName, cameraFeed);
-      //imshow(windowName1, HSV);
-      //setMouseCallback("Original Image", on_mouse, &p);
-      //delay 30ms so that screen can refresh.
-      //image will not appear without this waitKey() command
-      //waitKey(30);
+        setCoordinates_RED(xb, yb, cameraFeed, HSV, threshold_red);
+        setCoordinates_YELLOW(xd, yd, cameraFeed, HSV, threshold_yellow);
+        setCoordinates_BLUE(xo, yo, cameraFeed, HSV, threshold_blue);
+
+        if (yd < yb) {
+            sendCommand('r');
+            usleep(250000);
+            sendCommand('s');
+            usleep(250000);
+        } else {
+            sendCommand('l');
+            usleep(250000);
+            sendCommand('s');
+            usleep(250000);
+        }
+
+
+
+        /*
+            sendCommand('r');
+            usleep(500000);
+            sendCommand('s');
+            usleep(500000);
+      */
+        //show frames
+        //imshow(windowName2, threshold_red);
+        //imshow(windowName, cameraFeed);
+        //imshow(windowName1, HSV);
+        //setMouseCallback("Original Image", on_mouse, &p);
+        //delay 30ms so that screen can refresh.
+        //image will not appear without this waitKey() command
+        //waitKey(30);
     }
 
     return 0;
