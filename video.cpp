@@ -2,6 +2,9 @@
 #include <string>
 #include <thread>
 #include <iostream>
+#include <mutex>
+#include <mutex>
+#include <mutex>
 #include "opencv2/highgui/highgui.hpp"
 
 #include "opencv2/opencv.hpp"
@@ -21,8 +24,9 @@ using namespace cv;
 /***
     Global vars
 ***/
-
-std::thread t1;
+std::mutex m;
+int flag = 0;
+shared_ptr<thread> t1;
 
 //x and y values for the location of the object
 int xb = 0, yb = 0;
@@ -224,6 +228,8 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed) {
 
 void thread_task(unsigned char c, int delay) {
 
+    m.lock();
+    flag = 1;
     //cout << "Sent:" << c;
     n = write(sockfd, &c, 1);
     if (n < 0)
@@ -232,15 +238,16 @@ void thread_task(unsigned char c, int delay) {
     c = 's';
     n = write(sockfd, &c, 1);
     usleep(100 * 1000);
-
+    flag = 0;
+    m.unlock();
 }
 
 void sendCommand(unsigned char c, int delay) {
-    if (!t1.joinable()) {
-        t1 =  std::thread([=] { thread_task(c, delay); });
-        //thread(thread_task, c, delay);
-        t1.detach();
-    }else{
+    if (flag == 0) {
+        t1.reset(new std::thread([=] { thread_task(c, delay); }));
+        (*t1).detach();
+
+    } else {
         cout << "thread in execution";
     }
 }
@@ -306,8 +313,8 @@ void setCoordinates_GREEN(int &x, int &y, Mat &cameraFeed, Mat HSV, Mat threshol
     cout << "x verde: " << x << " " << " y verde" << y << "\n";
 }
 
-double getDistance(int x1, int y1, int x2, int y2){
-    return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+double getDistance(int x1, int y1, int x2, int y2) {
+    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 }
 
 int main(int argc, char *argv[]) {
@@ -340,11 +347,12 @@ int main(int argc, char *argv[]) {
         setCoordinates_YELLOW(xd, yd, cameraFeed, HSV, threshold_yellow);
         setCoordinates_BLUE(xo, yo, cameraFeed, HSV, threshold_blue);
 
-        double bd_dist = getDistance(xb,yb,xd,yd);
-        double bo_dist = getDistance(xb,yb,xo,yo);
-        double do_dist = getDistance(xd,yd,xo,yo);
+        double bd_dist = getDistance(xb, yb, xd, yd);
+        double bo_dist = getDistance(xb, yb, xo, yo);
+        double do_dist = getDistance(xd, yd, xo, yo);
 
-        cout<<"a: "<<bd_dist<<" b: "<<do_dist<<" c: "<<bo_dist<<" Diff: "<<(bd_dist + do_dist) - (bo_dist + 10) <<"\n";
+        cout << "a: " << bd_dist << " b: " << do_dist << " c: " << bo_dist << " Diff: "
+             << (bd_dist + do_dist) - (bo_dist + 10) << "\n";
 
         if ((bd_dist + do_dist) > bo_dist + 10) {
             if (yd < yb) {
@@ -355,7 +363,7 @@ int main(int argc, char *argv[]) {
             }
         } else {
             sendCommand('s', 30000);
-            sendCommand('f',400);
+            sendCommand('f', 400);
         }
 
         //show frames
