@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include<math.h>
 
 using namespace std;
 using namespace cv;
@@ -222,6 +223,7 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed) {
 //}
 
 void thread_task(unsigned char c, int delay) {
+
     //cout << "Sent:" << c;
     n = write(sockfd, &c, 1);
     if (n < 0)
@@ -230,6 +232,7 @@ void thread_task(unsigned char c, int delay) {
     c = 's';
     n = write(sockfd, &c, 1);
     usleep(100 * 1000);
+
 }
 
 void sendCommand(unsigned char c, int delay) {
@@ -244,7 +247,7 @@ void sendCommand(unsigned char c, int delay) {
 
 
 void configureSocket() {
-    portno = 20233;
+    portno = 20231;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
         error("ERROR opening socket");
@@ -303,6 +306,9 @@ void setCoordinates_GREEN(int &x, int &y, Mat &cameraFeed, Mat HSV, Mat threshol
     cout << "x verde: " << x << " " << " y verde" << y << "\n";
 }
 
+double getDistance(int x1, int y1, int x2, int y2){
+    return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+}
 
 int main(int argc, char *argv[]) {
     //structures for sockets
@@ -334,15 +340,22 @@ int main(int argc, char *argv[]) {
         setCoordinates_YELLOW(xd, yd, cameraFeed, HSV, threshold_yellow);
         setCoordinates_BLUE(xo, yo, cameraFeed, HSV, threshold_blue);
 
-        if (abs(xb - xd) > 10) {
-            if (xd < xb) {
+        double bd_dist = getDistance(xb,yb,xd,yd);
+        double bo_dist = getDistance(xb,yb,xo,yo);
+        double do_dist = getDistance(xd,yd,xo,yo);
+
+        cout<<"a: "<<bd_dist<<" b: "<<do_dist<<" c: "<<bo_dist<<" Diff: "<<(bd_dist + do_dist) - (bo_dist + 10) <<"\n";
+
+        if ((bd_dist + do_dist) > bo_dist + 10) {
+            if (yd < yb) {
 
                 sendCommand('r', 400);
             } else {
                 sendCommand('l', 400);
             }
         } else {
-            sendCommand('s', 50000);
+            sendCommand('s', 30000);
+            sendCommand('f',400);
         }
 
         //show frames
