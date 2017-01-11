@@ -21,6 +21,8 @@ using namespace cv;
     Global vars
 ***/
 
+std::thread t1;
+
 //x and y values for the location of the object
 int xb = 0, yb = 0;
 int xd = 0, yd = 0;
@@ -219,21 +221,30 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed) {
 //        error("ERROR writing to socket");
 //}
 
-void thread_task(unsigned char c) {
+void thread_task(unsigned char c, int delay) {
     //cout << "Sent:" << c;
     n = write(sockfd, &c, 1);
     if (n < 0)
         error("ERROR writing to socket");
+    usleep(delay * 1000);
+    c = 's';
+    n = write(sockfd, &c, 1);
+    usleep(100 * 1000);
 }
 
-void sendCommand(unsigned char c) {
-    std::thread t1(thread_task, c);
-    t1.join();
+void sendCommand(unsigned char c, int delay) {
+    if (!t1.joinable()) {
+        t1 =  std::thread([=] { thread_task(c, delay); });
+        //thread(thread_task, c, delay);
+        t1.detach();
+    }else{
+        cout << "thread in execution";
+    }
 }
 
 
 void configureSocket() {
-    portno = 20231;
+    portno = 20233;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
         error("ERROR opening socket");
@@ -306,7 +317,7 @@ int main(int argc, char *argv[]) {
     Mat threshold_yellow;
 
     //create slider bars for HSV filtering
-    createTrackbars();
+    //createTrackbars();
     //video capture object to acquire webcam feed
     VideoCapture capture;
     //open capture object at location zero (default location for webcam)
@@ -319,32 +330,29 @@ int main(int argc, char *argv[]) {
         //store image to matrix
         capture.read(cameraFeed);
 
-        setCoordinates_GREEN(xb, yb, cameraFeed, HSV, threshold_red);
+        setCoordinates_GREEN(xb, yb, cameraFeed, HSV, threshold_green);
         setCoordinates_YELLOW(xd, yd, cameraFeed, HSV, threshold_yellow);
         setCoordinates_BLUE(xo, yo, cameraFeed, HSV, threshold_blue);
 
-        if (abs(yb - yd) > 5) {
-            if (yd < yb) {
-                sendCommand('r');
-                usleep(200000);
-                sendCommand('s');
-                usleep(200000);
+        if (abs(xb - xd) > 10) {
+            if (xd < xb) {
+
+                sendCommand('r', 400);
             } else {
-                sendCommand('l');
-                usleep(200000);
-                sendCommand('s');
-                usleep(200000);
+                sendCommand('l', 400);
             }
+        } else {
+            sendCommand('s', 50000);
         }
 
         //show frames
         //  imshow(windowName2, threshold_yellow);
-        imshow(windowName, cameraFeed);
+//        imshow(windowName, cameraFeed);
 //        imshow(windowName1, cameraFeed);
-        setMouseCallback("Original Image", on_mouse, &p);
+//        setMouseCallback("Original Image", on_mouse, &p);
         //delay 30ms so that screen can refresh.
         //image will not appear without this waitKey() command
-        waitKey(30);
+//        waitKey(30);
     }
 
     return 0;
