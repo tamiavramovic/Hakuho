@@ -237,7 +237,7 @@ void thread_task(unsigned char c, int delay) {
     usleep(delay * 1000);
     c = 's';
     n = write(sockfd, &c, 1);
-    usleep(100 * 1000);
+//    usleep(100 * 1000);
     flag = 0;
     m.unlock();
 }
@@ -246,10 +246,10 @@ void sendCommand(unsigned char c, int delay) {
     if (flag == 0) {
         t1.reset(new std::thread([=] { thread_task(c, delay); }));
         (*t1).detach();
-
-    } else {
-        cout << "thread in execution";
     }
+//    } else {
+//        cout << "thread in execution";
+//    }
 }
 
 
@@ -279,21 +279,22 @@ void setCoordinates_RED(int &x, int &y, Mat &cameraFeed, Mat HSV, Mat threshold_
     //cout << "x red: " << x << " " << "y red" << y << "\n";
 }
 
-void setCoordinates_BLUE(int &x, int &y, Mat &cameraFeed, Mat HSV, Mat threshold_blue) {
+void setCoordinates_BLUE(int &x, int &y, Mat &cameraFeed, Mat HSV, Mat &threshold_blue) {
     cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
-    inRange(HSV, Scalar(102, 24, 54), Scalar(103, 255, 256), threshold_blue);
+    inRange(HSV, Scalar(87, 39, 17), Scalar(107, 255, 256), threshold_blue);
+//    inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold_blue);
     if (useMorphOps)
         morphOps(threshold_blue);
     if (trackObjects) {
         trackFilteredObject(x, y, threshold_blue, cameraFeed);
     }
-    //cout << "x blue: " << x << " " << "y blue" << y << "\n";
+    cout << "x blue: " << x << " " << "y blue " << y << "\n";
 }
 
 void setCoordinates_YELLOW(int &x, int &y, Mat &cameraFeed, Mat HSV, Mat &threshold_yellow) {
     cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
-    inRange(HSV, Scalar(0, 86, 237), Scalar(83, 200, 256), threshold_yellow);
-    //    inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold_yellow);
+    inRange(HSV, Scalar(0, 98, 204), Scalar(83, 152, 256), threshold_yellow);
+//        inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold_yellow);
     if (useMorphOps)
         morphOps(threshold_yellow);
     if (trackObjects) {
@@ -302,7 +303,7 @@ void setCoordinates_YELLOW(int &x, int &y, Mat &cameraFeed, Mat HSV, Mat &thresh
     cout << "x yellow: " << x << " " << " y yellow" << y << "\n";
 }
 
-void setCoordinates_GREEN(int &x, int &y, Mat &cameraFeed, Mat HSV, Mat threshold_green) {
+void setCoordinates_GREEN(int &x, int &y, Mat &cameraFeed, Mat HSV, Mat &threshold_green) {
     cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
     inRange(HSV, Scalar(47, 95, 0), Scalar(87, 256, 256), threshold_green);
     if (useMorphOps)
@@ -330,11 +331,12 @@ int main(int argc, char *argv[]) {
     Mat threshold_yellow;
 
     //create slider bars for HSV filtering
-    //createTrackbars();
+//    createTrackbars();
     //video capture object to acquire webcam feed
     VideoCapture capture;
     //open capture object at location zero (default location for webcam)
-    capture.open("rtmp://172.16.254.63/live/live");    //set height and width of capture frame
+    //capture.open("rtmp://172.16.254.63/live/live");    //set height and width of capture frame
+    capture.open(1);
     capture.set(CV_CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
     capture.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
     //start an infinite loop where webcam feed is copied to cameraFeed matrix
@@ -350,24 +352,23 @@ int main(int argc, char *argv[]) {
         double bd_dist = getDistance(xb, yb, xd, yd);
         double bo_dist = getDistance(xb, yb, xo, yo);
         double do_dist = getDistance(xd, yd, xo, yo);
+        double diff = (bd_dist + do_dist) - (bo_dist + 5);
 
-        cout << "a: " << bd_dist << " b: " << do_dist << " c: " << bo_dist << " Diff: "
-             << (bd_dist + do_dist) - (bo_dist + 10) << "\n";
+        cout << "a: " << bd_dist << " b: " << do_dist << " c: " << bo_dist << " Diff: " << diff << "\n";
 
-        if ((bd_dist + do_dist) > bo_dist + 10) {
-            if (yd < yb) {
-
-                sendCommand('r', 400);
+        if ((bd_dist + do_dist) > bo_dist + 5) {
+            if (diff > 6) {
+                sendCommand('r', diff * 1.5);
             } else {
-                sendCommand('l', 400);
+                sendCommand('r', 70);
             }
         } else {
-            sendCommand('s', 30000);
-            sendCommand('f', 400);
+//            sendCommand('s', 500);
+            sendCommand('f', 700);
         }
 
         //show frames
-        //  imshow(windowName2, threshold_yellow);
+//          imshow(windowName2, threshold_yellow);
 //        imshow(windowName, cameraFeed);
 //        imshow(windowName1, cameraFeed);
 //        setMouseCallback("Original Image", on_mouse, &p);
